@@ -12,6 +12,7 @@ import time
 import socket
 import pickle
 from collections import namedtuple
+import logging
 
 import numpy as np
 
@@ -20,15 +21,22 @@ import Monsoon.sampleEngine as sampleEngine
 import Monsoon.reflash as reflash
 import Monsoon.Operations as op
 
-import logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-log_format = logging.Formatter(
-                fmt='%(asctime)s [%(levelname)s] %(message)s',
-                datefmt="%H:%M:%S")
-log_handler = logging.StreamHandler()
-log_handler.setFormatter(log_format)
-logger.addHandler(log_handler)
+
+def get_logger():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    log_format = logging.Formatter(
+                    fmt='%(asctime)s [%(levelname)s] %(message)s',
+                    datefmt="%H:%M:%S")
+    log_handler = logging.StreamHandler()
+    log_handler.setFormatter(log_format)
+    logger.addHandler(log_handler)
+
+    return logger
+
+logger = get_logger()
+
+# TODO: Two subclass? (white and black)
 
 
 class PowerMonitor(object):
@@ -102,24 +110,24 @@ class PowerMonitor(object):
         for channel in self.all_channels:
             self.engine.disableChannel(channel)
 
-    def enable_usb_channels(self):
-        self.engine.enableChannel(sampleEngine.channels.USBCurrent)
-        self.engine.enableChannel(sampleEngine.channels.USBVoltage)
-
-    def disable_usb_channels(self):
-        self.engine.disableChannel(sampleEngine.channels.USBCurrent)
-        self.engine.disableChannel(sampleEngine.channels.USBVoltage)
-
     def enable_main_channels(self):
         self.engine.enableChannel(sampleEngine.channels.MainCurrent)
         self.engine.enableChannel(sampleEngine.channels.MainVoltage)
 
-    def disable_usb_channels(self):
-        self.engine.disableChannel(sampleEngine.channels.USBCurrent)
-        self.engine.disableChannel(sampleEngine.channels.USBVoltage)
+    def enable_usb_channels(self):
+        self.engine.enableChannel(sampleEngine.channels.USBCurrent)
+        self.engine.enableChannel(sampleEngine.channels.USBVoltage)
 
     def enable_timestamp_channel(self):
         self.engine.enableChannel(sampleEngine.channels.timeStamp)
+
+    def disable_main_channels(self):
+        self.engine.disableChannel(sampleEngine.channels.MainCurrent)
+        self.engine.disableChannel(sampleEngine.channels.MainVoltage)
+
+    def disable_usb_channels(self):
+        self.engine.disableChannel(sampleEngine.channels.USBCurrent)
+        self.engine.disableChannel(sampleEngine.channels.USBVoltage)
 
     def disable_timestamp_channel(self):
         self.engine.disableChannel(sampleEngine.channels.timeStamp)
@@ -163,10 +171,6 @@ class PowerMonitor(object):
 
     def set_trigger_from_remote_pi(self):
 
-        # self.device.setUSBPassthroughMode(op.USB_Passthrough.On)
-
-        # TODO: Is it necessary to enable channel for triggering?
-        # self.engine.enableChannel(sampleEngine.channels.USBVoltage)
         self.engine.setStartTrigger(sampleEngine.triggers.GREATER_THAN, 3.00)
         self.engine.setStopTrigger(sampleEngine.triggers.LESS_THAN, 1.00)
         self.engine.setTriggerChannel(sampleEngine.channels.USBVoltage)
@@ -176,6 +180,7 @@ class PowerMonitor(object):
         self.set_trigger_from_remote_pi()
         samples = self.start_sampling(console_output=True)
         # test_name = self.get_remote_trigger_details()
+
         watts = self.compute_power(samples.mainCurrent, samples.mainVoltage)
 
         total_time_s = (samples.timeStamp[-1] - samples.timeStamp[0])
