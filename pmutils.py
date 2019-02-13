@@ -14,6 +14,9 @@ import pickle
 from collections import namedtuple
 import logging
 
+import threading
+import serial
+
 import numpy as np
 
 import Monsoon
@@ -21,6 +24,21 @@ import Monsoon.sampleEngine as sampleEngine
 import Monsoon.reflash as reflash
 import Monsoon.Operations as op
 
+
+def serial_listener(data):
+
+    with serial.Serial('/dev/tty.usbmodem144103', 9600, timeout=3, rtscts=1) as ser:
+        ser.flushInput()
+        ser.flushOutput()
+        print("Listening...")
+        while True:
+                data_raw = ser.readline()
+                if data_raw.decode('utf-8') == "EXIT":
+                    break
+                else:
+                    if data_raw.decode('utf-8') != "":
+                        print(data_raw)
+                        data.append(data_raw)
 
 def get_logger():
     logger = logging.getLogger(__name__)
@@ -147,11 +165,17 @@ class PowerMonitor(object):
 
         self.engine.ConsoleOutput(False)
 
+        data = []
+        t = threading.Thread(target=serial_listener, args=(data,))
+        t.daemon = True
+        t.start()
+
         self.engine.startSampling(num_samples)
 
+        t.join()
         self.power_off()
 
-        return self.read_samples()
+        return self.read_samples(), data
 
     def start_sampling(self, console_output=True, csv_output=None):
         if csv_output is not None:
