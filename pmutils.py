@@ -137,6 +137,22 @@ class PowerMonitor(object):
         self.engine.ConsoleOutput(True)
         self.engine.startSampling(sampleEngine.triggers.SAMPLECOUNT_INFINITE)
 
+
+    def cortex_experiment(self, num_samples = sampleEngine.triggers.SAMPLECOUNT_INFINITE):
+        self.power_on(vout=5.0)
+        self.enable_all_channels()
+
+        self.engine.setStartTrigger(sampleEngine.triggers.GREATER_THAN, 3.00)
+        self.engine.setTriggerChannel(sampleEngine.channels.USBVoltage)
+
+        self.engine.ConsoleOutput(False)
+
+        self.engine.startSampling(num_samples)
+
+        self.power_off()
+
+        return self.read_samples()
+
     def start_sampling(self, console_output=True, csv_output=None):
         if csv_output is not None:
             self.engine.enableCSVOutput(csv_output)
