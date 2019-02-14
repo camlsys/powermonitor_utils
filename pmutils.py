@@ -15,6 +15,7 @@ from collections import namedtuple
 import logging
 
 import threading
+import glob
 import serial
 
 import numpy as np
@@ -27,10 +28,22 @@ import Monsoon.Operations as op
 
 def serial_listener(data):
 
-    with serial.Serial('/dev/tty.usbmodem144103', 9600, timeout=3, rtscts=1) as ser:
+    if sys.platform.startswith('linux'): # untested
+        ports = glob.glob('/dev/ttyUSB*');
+    elif sys.platform.startswith('darwin'):
+        ports = glob.glob('/dev/tty.usbmodem*');
+    else:
+        print("PLATFORM NOT SUPPORTED.... DISABLING SERIAL LISTENER!")
+        return
+
+    print("List of used USB ports:")
+    for p in ports:
+        print("\t>", p)
+
+    print("Listening on port: %s ..." % (ports[0]))
+    with serial.Serial(ports[0], 9600, timeout=3, rtscts=1) as ser:
         ser.flushInput()
         ser.flushOutput()
-        print("Listening...")
         while True:
                 data_raw = ser.readline()
                 if data_raw.decode('utf-8') == "EXIT":
