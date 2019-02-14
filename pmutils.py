@@ -169,7 +169,7 @@ class PowerMonitor(object):
         self.engine.startSampling(sampleEngine.triggers.SAMPLECOUNT_INFINITE)
 
 
-    def cortex_experiment(self, num_samples = sampleEngine.triggers.SAMPLECOUNT_INFINITE):
+    def cortex_experiment(self, num_seconds=5):
         self.power_on(vout=5.0)
         self.enable_all_channels()
 
@@ -183,6 +183,7 @@ class PowerMonitor(object):
         t.daemon = True
         t.start()
 
+        num_samples = num_seconds * 5000 # 5kHz is the sampling rate of the power monitor
         self.engine.startSampling(num_samples)
 
         t.join()
