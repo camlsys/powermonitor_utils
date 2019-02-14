@@ -46,12 +46,12 @@ def serial_listener(data):
         ser.flushOutput()
         while True:
                 data_raw = ser.readline()
-                if data_raw.decode('utf-8') == "EXIT":
+                data_dec = data_raw.decode('utf-8')
+                if data_dec == "EXIT":
                     break
-                else:
-                    if data_raw.decode('utf-8') != "":
-                        print(data_raw)
-                        data.append(data_raw)
+                elif data_dec != "":
+                    print(data_raw)
+                    data.append(data_raw)
 
 def get_logger():
     logger = logging.getLogger(__name__)
